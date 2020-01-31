@@ -37,13 +37,13 @@ public:
     return Solver->query(Q);
   }
 
-  void addNext(const InstMapTy &InstMap, Instruction *X, Instruction *Y);
-  void addDef(const InstMapTy &InstMap, Value *X, Instruction *L);
-  void addUse(const InstMapTy &InstMap, Value *X, Instruction *L);
-  void addDiv(const InstMapTy &InstMap, Value *X, Instruction *L);
-  void addTaint(const InstMapTy &InstMap, Instruction *L);
-  void addSanitizer(const InstMapTy &InstMap, Instruction *L);
-  void addGen(const InstMapTy &InstMap, Instruction *X, Value *Y);
+  void addDef(const InstMapTy &InstMap, Value *X, Instruction *I);
+  void addUse(const InstMapTy &InstMap, Value *X, Instruction *I);
+  void addNext(const InstMapTy &InstMap, Instruction *I, Instruction *J);
+  void addDiv(const InstMapTy &InstMap, Value *X, Instruction *I);
+  void addTaint(const InstMapTy &InstMap, Instruction *I);
+  void addSanitizer(const InstMapTy &InstMap, Instruction *I);
+  void addGen(const InstMapTy &InstMap, Instruction *X, Instruction *I);
 
   void extractConstraints(const InstMapTy &InstMap, Instruction *I);
 
