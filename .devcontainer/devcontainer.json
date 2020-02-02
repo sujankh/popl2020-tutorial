@@ -1,0 +1,13 @@
+{
+    "name": "My Project",
+    "image": "petablox/popl2020-tutorial:latest",
+    "settings": {
+                "terminal.integrated.shell.linux": "/bin/bash"
+        },
+    "appPort": 40030,
+	"extensions": [
+		"ms-vscode.cpptools",
+        "twxs.cmake"
+        
+	]
+}
