@@ -8,6 +8,8 @@
 	"extensions": [
 		"ms-vscode.cpptools",
         "twxs.cmake"
-        
-	]
+    ],
+    "mounts": [
+        "source=popl-unique-vol,target=/root/.vscode-server/extensions,type=volume"
+    ]
 }
