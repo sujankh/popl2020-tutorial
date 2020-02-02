@@ -135,6 +135,15 @@ void Extractor::extractConstraints(const InstMapTy &InstMap, Instruction *I) {
   }
   else if(CallInst *call = dyn_cast<CallInst>(I))
   {
+    if(isTaintedInput(call))
+    {
+      addTaint(InstMap, call);
+    }
+    else if(isSanitizer(call))
+    {
+      addSanitizer(InstMap, call);
+    }
+    // Add def for call variable??
     std::cout << "Calling " << call->getCalledFunction()->getName().str() << "(";
     for(const auto & arg : call->arg_operands())
     {
@@ -147,6 +156,10 @@ void Extractor::extractConstraints(const InstMapTy &InstMap, Instruction *I) {
     
     if (binary->getOpcode() == Instruction::SDiv)
     {    
+      addDiv(InstMap, binary->getOperand(1), binary);
+      
+      addUse(InstMap, binary->getOperand(0), binary);
+      addUse(InstMap, binary->getOperand(1), binary);
       std::cout << "Division: " << binary << std::endl;
       std::cout << binary->getOperand(0) << "/" << binary->getOperand(1) << std::endl;      
     }
