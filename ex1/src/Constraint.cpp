@@ -40,20 +40,17 @@ int main(int argc, char **argv) {
 
   for (auto &F : *Mod) {
     Instruction *prev = nullptr;
-    for (inst_iterator I = inst_begin(F), E = inst_end(F); I != E;I++) {
+    for (inst_iterator I = inst_begin(F), E = inst_end(F); I != E; I++) {
       Ext.extractConstraints(InstMap, &*I);
-      if (prev != nullptr)
-      {
+      if (prev != nullptr) {
         // Next(I,J): Instr J comes immediately after I
-        std::cout << "Add Next" << std::endl;
         Ext.addNext(InstMap, prev, &*I);
       }
       prev = &*I;
     }
   }
 
-  if (argc == 3 && !strcmp(argv[2], "-d"))
-  {
+  if (argc == 3 && !strcmp(argv[2], "-d")) {
     std::cout << "Printing InstMap" << std::endl;
     Ext.print(InstMap);
   }

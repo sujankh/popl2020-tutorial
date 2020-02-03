@@ -14,3 +14,10 @@ cd test
 make simple0.ll  
 ../build/constraint simple0.ll 
 ```
+
+**To understand/debug the Rules**  
+```
+cd test  
+make simple0.ll  
+../build/constraint simple0.ll -d
+```

@@ -29,36 +29,44 @@ void Extractor::initialize() {
    */
 
   z3::expr X = C.bv_const("X", 32);
-  //z3::expr Y = C.bv_const("Y", 32);
-  
+  // z3::expr Y = C.bv_const("Y", 32);
+
   z3::expr I = C.bv_const("I", 32);
   z3::expr J = C.bv_const("J", 32);
   z3::expr K = C.bv_const("K", 32);
 
-  // Reaching def rules  
-  z3::expr kill_rule = z3::forall(X, I, J, z3::implies(Def(X, I) && Def(X, J), Kill(X, J)));
+  // Reaching def rules
+  z3::expr kill_rule =
+      z3::forall(X, I, J, z3::implies(Def(X, I) && Def(X, J), Kill(X, J)));
   Solver->add_rule(kill_rule, C.str_symbol("kill_rule"));
 
   z3::expr out_rule1 = z3::forall(X, I, z3::implies(Gen(X, I), Out(X, I)));
   Solver->add_rule(out_rule1, C.str_symbol("out_rule1"));
 
-  z3::expr out_rule2 = z3::forall(X, I, z3::implies(In(X, I) && !Kill(X, I), Out(X, I)));
+  z3::expr out_rule2 =
+      z3::forall(X, I, z3::implies(In(X, I) && !Kill(X, I), Out(X, I)));
   Solver->add_rule(out_rule2, C.str_symbol("out_rule2"));
 
-  z3::expr in_rule = z3::forall(X, I, J, z3::implies(Out(X, I) && Next(I, J), In(X, J)));
+  z3::expr in_rule =
+      z3::forall(X, I, J, z3::implies(Out(X, I) && Next(I, J), In(X, J)));
   Solver->add_rule(in_rule, C.str_symbol("in_rule"));
 
   // Taint analysis rules
-  z3::expr edge_rule = z3::forall(X, I, J, z3::implies(Def(X, I) && Use(X, J) && Next(I, J), Edge(I, J)));
+  z3::expr edge_rule = z3::forall(
+      X, I, J, z3::implies(Def(X, I) && Use(X, J) && Next(I, J), Edge(I, J)));
   Solver->add_rule(edge_rule, C.str_symbol("edge_rule"));
 
-  z3::expr path_rule1 = z3::forall(I, J, z3::implies(Edge(I, J) && Taint(I), Path(I, J)));
+  z3::expr path_rule1 =
+      z3::forall(I, J, z3::implies(Edge(I, J) && Taint(I), Path(I, J)));
   Solver->add_rule(path_rule1, C.str_symbol("path_rule1"));
 
-  z3::expr path_rule2 = z3::forall(I, J, K, z3::implies(Path(I,J) && Edge(J,K) && !Sanitizer(J), Path(I, K)));
+  z3::expr path_rule2 = z3::forall(
+      I, J, K,
+      z3::implies(Path(I, J) && Edge(J, K) && !Sanitizer(J), Path(I, K)));
   Solver->add_rule(path_rule2, C.str_symbol("path_rule2"));
 
-  z3::expr alarm_rule = z3::forall(X, I, J, z3::implies(Path(I, J) && Div(X, J), Alarm(J)));
+  z3::expr alarm_rule =
+      z3::forall(X, I, J, z3::implies(Path(I, J) && Div(X, J), Alarm(J)));
   Solver->add_rule(alarm_rule, C.str_symbol("alarm_rule"));
 }
 
@@ -97,7 +105,8 @@ void Extractor::addSanitizer(const InstMapTy &InstMap, Instruction *I) {
   Solver->add_fact(Sanitizer, Arr);
 }
 
-void Extractor::addGen(const InstMapTy &InstMap, Instruction *X, Instruction *I) {
+void Extractor::addGen(const InstMapTy &InstMap, Instruction *X,
+                       Instruction *I) {
   unsigned int Arr[2] = {InstMap.at(X), InstMap.at(I)};
   Solver->add_fact(Gen, Arr);
 }
@@ -118,50 +127,60 @@ void Extractor::extractConstraints(const InstMapTy &InstMap, Instruction *I) {
   // Different kind of instructions
   // http://llvm.org/doxygen/classllvm_1_1Instruction.html
 
-  if(StoreInst *si = dyn_cast<StoreInst>(I))
-  {
-    std::cout << "Storing " << si->getValueOperand()->getValueName() << " to " << si->getPointerOperand()->getName().str() << "("  << si->getPointerOperand() << ")" << std::endl;
+  if (StoreInst *si = dyn_cast<StoreInst>(I)) {
+    std::cout << "Storing " << si->getValueOperand()->getValueName() << " to "
+              << si->getPointerOperand()->getName().str() << "("
+              << si->getPointerOperand() << ")" << std::endl;
     std::cout << "Store Instr " << si << std::endl;
-    //store i32 %call, i32* %x
-    //store i32 0, i32* %retval
+    // store i32 %call, i32* %x
+    // store i32 0, i32* %retval
 
     addDef(InstMap, si->getPointerOperand(), si);
     addUse(InstMap, si->getValueOperand(), si);
     addGen(InstMap, si, si);
-  }
-  else if(LoadInst *li = dyn_cast<LoadInst>(I))
-  {
-    std::cout << "Loading " << li->getPointerOperand()->getName().str() << "(" <<  li->getPointerOperand() << ") to " << li << std::endl;    
-  }
-  else if(CallInst *call = dyn_cast<CallInst>(I))
-  {
-    if(isTaintedInput(call))
-    {
+  } else if (LoadInst *li = dyn_cast<LoadInst>(I)) {
+    addUse(InstMap, li->getPointerOperand(), li);
+    addDef(InstMap, li, li);
+    addGen(InstMap, li, li);
+
+    std::cout << "Loading " << li->getPointerOperand()->getName().str() << "("
+              << li->getPointerOperand() << ") to " << li << std::endl;
+  } else if (CallInst *call = dyn_cast<CallInst>(I)) {
+    if (isTaintedInput(call)) {
       addTaint(InstMap, call);
-    }
-    else if(isSanitizer(call))
-    {
+    } else if (isSanitizer(call)) {
       addSanitizer(InstMap, call);
     }
-    // Add def for call variable??
-    std::cout << "Calling " << call->getCalledFunction()->getName().str() << "(";
-    for(const auto & arg : call->arg_operands())
-    {
+
+    // Does the function return
+    if (!call->getCalledFunction()->getReturnType()->isVoidTy()) {
+      addGen(InstMap, call, call);
+      addDef(InstMap, call, call);
+    }
+
+    std::cout << "Return val stored in " << call->getValueName() << std::endl;
+    std::cout << "Call instr " << call->getValueName() << std::endl;
+
+    std::cout << "Calling " << call->getCalledFunction()->getName().str()
+              << "(";
+    for (const auto &arg : call->arg_operands()) {
       std::cout << arg;
+      addUse(InstMap, arg, call);
     }
     std::cout << ") at " << call << std::endl;
-  }
-  else if(BinaryOperator *binary = dyn_cast<BinaryOperator>(I))
-  {
-    
-    if (binary->getOpcode() == Instruction::SDiv)
-    {    
+  } else if (BinaryOperator *binary = dyn_cast<BinaryOperator>(I)) {
+    addUse(InstMap, binary->getOperand(0), binary);
+    addUse(InstMap, binary->getOperand(1), binary);
+
+    addDef(InstMap, binary, binary);
+    addGen(InstMap, binary, binary);
+
+    if (binary->getOpcode() == Instruction::SDiv) {
       addDiv(InstMap, binary->getOperand(1), binary);
-      
-      addUse(InstMap, binary->getOperand(0), binary);
-      addUse(InstMap, binary->getOperand(1), binary);
+
       std::cout << "Division: " << binary << std::endl;
-      std::cout << binary->getOperand(0) << "/" << binary->getOperand(1) << std::endl;      
+      std::cout << binary->getOperand(0) << "/" << binary->getOperand(1)
+                << std::endl;
     }
   }
 
