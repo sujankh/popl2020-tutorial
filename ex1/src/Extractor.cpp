@@ -35,6 +35,21 @@ void Extractor::initialize() {
   z3::expr J = C.bv_const("J", 32);
   z3::expr K = C.bv_const("K", 32);
 
+
+  //   z3::expr def_path2 = z3::forall(
+  //     I, J,
+  //     z3::implies(Next(I, J), DefPath(I, J)));
+  // Solver->add_rule(def_path2, C.str_symbol("DefPath2"));
+
+  //   z3::expr def_path1 = z3::forall(
+  //     I, J, K,
+  //     z3::implies(DefPath(I, J) && DefPath(J, K), DefPath(I, K)));
+  // Solver->add_rule(def_path1, C.str_symbol("DefPath1"));
+
+  //   z3::expr kill_rule =
+  //     z3::forall(X, I, J, z3::implies(Def(X, I) && DefPath(I, J) && Def(X, J), Kill(X, J)));
+
+
   // Reaching def rules
   z3::expr kill_rule =
       z3::forall(X, I, J, z3::implies(Def(X, I) && Def(X, J), Kill(X, J)));

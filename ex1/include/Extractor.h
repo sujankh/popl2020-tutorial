@@ -53,6 +53,7 @@ public:
   }
 
   void print(InstMapTy &InstMap) {
+    
     std::cout << "=== Reaching Definition (Out) ===" << std::endl;
     for (auto &V1 : InstMap) {
       std::cout << std::endl << "Out: " << toString(V1.first) << std::endl;
@@ -63,12 +64,16 @@ public:
         }
       }
     }
+    
+
     std::cout << "=== Kill ===" << std::endl;
     for (auto &V1 : InstMap) {
+      std::cout << std::endl << "Kill: " << toString(V1.first) << std::endl;
       for (auto &V2 : InstMap) {
-        z3::expr Q = Kill(C.bv_val(V1.second, 32), C.bv_val(V2.second, 32));
+        z3::expr Q = Kill(C.bv_val(V2.second, 32), C.bv_val(V1.second, 32));
         if (Solver->query(Q) == z3::sat) {
-          printTuple("Kill", V1.first, V2.first);
+          //printTuple("Kill", V1.first, V2.first);
+          std::cout << " -> " << toString(V2.first) << std::endl;
         }
       }
     }
@@ -125,6 +130,8 @@ public:
   z3::func_decl Use = C.function("Use", LLVMInst, LLVMInst, C.bool_sort());
 
   /* Relations for Reaching Definition */
+  //z3::func_decl DefPath = C.function("DefPath", LLVMInst, LLVMInst, C.bool_sort());
+
   z3::func_decl Kill = C.function("Kill", LLVMInst, LLVMInst, C.bool_sort());
   z3::func_decl Gen = C.function("Gen", LLVMInst, LLVMInst, C.bool_sort());
   z3::func_decl Next = C.function("Next", LLVMInst, LLVMInst, C.bool_sort());
